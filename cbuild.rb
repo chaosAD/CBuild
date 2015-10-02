@@ -1,4 +1,4 @@
-# Build script for C
+# Build script for C (ver 0.2)
 # Copyright (C) 2015 Poh Tze Ven, <pohtv@acd.tarc.edu.my>
 #
 # This file is part of C Compiler & Interpreter project.
@@ -15,6 +15,7 @@
 # along with GDB RSP and ARM Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
 def appendSlashToPath(path)
+  return if path == nil || path == ''
   path[-1] == '/'? path : path + '/'
 end
 
@@ -80,13 +81,15 @@ def compile_list(list, src_path, obj_path, exe_path, config)
 #    dependees = [obj_path, exe_path]
     dependees = []
     dependees += prependProperPathToFilenames(obj[1], src_path, obj_path, exe_path)
-#    p dependees
-#    p dependees.select { |f| File.directory? f }  
+#    p depender
+#    p dependees.select { |f| File.directory? f }
     file depender => dependees do |n|
+#      p n.name
       case obj[0]
         when /.+\.o$/     # Handle object file
           dependees = n.prerequisites.select { |f|
-            f =~ /.+\.c$/ || f =~ /.+\.cpp$/ || f =~ /.+\.cc$/
+            (f =~ /.+\.c$/ || f =~ /.+\.cpp$/ || f =~ /.+\.cc$/) &&           \
+            !(File.directory? f)
           }
           # Get compiler
           raise ArgumentError,                                                \
@@ -134,7 +137,8 @@ def compile_list(list, src_path, obj_path, exe_path, config)
           end
           system(command)
         else
-          raise TypeError, "Error: Sorry, don't know how to produce '#{obj[0]}'"
+          sh "touch #{n.name}"
+          #raise TypeError, "Error: Sorry, don't know how to produce '#{obj[0]}'"
       end
     end
   end
