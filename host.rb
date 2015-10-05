@@ -32,7 +32,7 @@ config = {
   :linker       => 'gcc',
   :include_path => [CEXCEPTION_PATH,
                    'src'],
-  :user_define  => ['CEXCEPTION_USE_CONFIG_FILE', 'TEST='],
+#  :user_define  => ['CEXCEPTION_USE_CONFIG_FILE', 'TEST='],
 #  :library_path => 'lib',
 #  :library => ['libusb'],
 #  :compiler_options => ['-DOK'],                 # Other compiler options
@@ -48,12 +48,22 @@ config = {
 }
 
 namespace :host do
-  #            dependency list  directory of   directory of     directory of    config
-  #                             dependee       .o files         .exe            object
-  compile_list(main_dependency, 'src', 'build/release/host/c', 'build/release', config)
-  compile_list(exception_dependency, CEXCEPTION_PATH, 'build/release/host/c', 'build/release', config)
-
-  desc 'Build release code'
-  task :release => 'build/release/Main.exe'
+  desc 'Build custom release code'
+  task :release do
+    #            dependency list  directory of   directory of     directory of    config
+    #                             dependee       .o files         .exe            object
+    compile_list(main_dependency, 'src', 'build/release/host/c', 'build/release', config)
+    compile_list(exception_dependency, CEXCEPTION_PATH, 'build/release/host/c', 'build/release', config)
+    Rake::Task["build/release/Main.exe"].invoke
+  end
 end
 
+namespace :easy do
+  desc 'Build easy release code'
+  task :release do
+    dep_list = compile_list(exception_dependency, CEXCEPTION_PATH, 'build/release/host/c', '.', config)
+    dep_list.merge!(compile_all(['src'], 'build/release/host/c', config))
+    link_all(getDependers(dep_list), 'build/release/Main.exe', config)
+    Rake::Task["build/release/Main.exe"].invoke
+  end
+end
